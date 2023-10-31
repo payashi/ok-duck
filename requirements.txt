@@ -1,0 +1,5 @@
+wave
+thread6
+pyaudio
+transitions
+gpiozero
