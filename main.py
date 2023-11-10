@@ -1,27 +1,28 @@
-from secduck import ModeButton, CaptureButton, Duck
-import asyncio
-from signal import pause
+"""Playground"""
 
-duck = Duck("payashi")
+import threading
+import pathlib
+from secduck import LaptopDuck
 
-# asyncio.get_event_loop().run_until_complete(duck.boot())
 
-# cbtn = CaptureButton(14, pull_up=True)
+duck = LaptopDuck("payashi", "server")
+AUDIO_PATH = pathlib.Path(__file__).parent.joinpath("sample.wav")
 
-def long_cb():
-    print("long")
-    print(duck.state)
-    duck.to_break()
-    print(duck.state)
 
-def short_cb():
-    print("short")
-    print(duck.state)
-    duck.to_pause()
-    print(duck.state)
+def key_detect():
+    """Detect a key to press"""
+    while True:
+        val = input()
+        if val == "start recording":
+            duck.start_recording()
+        elif val == "stop recording":
+            duck.stop_recording()
+        elif val == "start speaking":
+            duck.start_speaking(str(AUDIO_PATH))
+        elif val == "stop speaking":
+            duck.stop_speaking()
 
-mbtn = ModeButton(4, pull_up=True, long_callback=long_cb, short_callback=short_cb)
 
-duck.boot()
+gpio_thread = threading.Thread(target=key_detect)
 
-pause()
+gpio_thread.start()

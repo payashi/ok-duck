@@ -1,92 +1,52 @@
-import asyncio
-import time
+"""Abstract Duck with threading"""
 import threading
-from gpiozero import Button
-from transitions.extensions.asyncio import AsyncMachine
+import logging
 from transitions import Machine
+from .recorder import Recorder
+from .speaker import Speaker
+from .settings import REC_CONFIG, SPK_CONFIG
 
-from .settings import CAPTURE_BUTTON, MODE_BUTTON
-from .capture_button import CaptureButton
-from .mode_button import ModeButton
+logging.basicConfig(
+    format="%(asctime)s.%(msecs)03d:%(threadName)s:%(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
 
-class Duck(object):
-    states = ["init", "pause", "break", "work"]
 
-    def __init__(self, user_id):
+class LaptopDuck:
+    """Duck who can be run on a laptop"""
+
+    states = ["init", "pause", "work", "break", "busy"]
+
+    def __init__(self, user_id, server):
         self.user_id = user_id
-        self.loop = asyncio.new_event_loop()
-
-        boot = dict(
-            trigger="boot",
-            source="init",
-            dest="pause",
-            before="sync",
-        )
-
-        temp = dict(
-            trigger="temp",
-            source="*",
-            dest="work",
-            before="greet",
-        )
-
+        self.server = server
         self.machine = Machine(
             model=self,
-            states=Duck.states,
-            transitions=[boot, temp],
+            states=LaptopDuck.states,
             initial="init",
         )
+        self._lock = threading.Lock()
 
-    def greet(self):
-        print('hello!')
+        self.recorder = Recorder(**REC_CONFIG)
+        self.speaker = Speaker(**SPK_CONFIG)
 
-    def sync(self):
-        # TODO: Get configurations from a server
-        print("Getting configurations from the server")
-        self.loop.run_until_complete(self.async_task())
-        # TODO: quack!
-        print("Quack!")
+    def start_recording(self):
+        """Start listening to the mic"""
+        logging.info("DUCK: Start listening to your voice")
+        self.recorder.start()
 
-    async def async_task(self):
-        print(self.state)
-        await asyncio.sleep(1)
+    def stop_recording(self):
+        """Stop listening to the mic"""
+        logging.info("DUCK: Stop listening to your voice")
+        self.recorder.stop()
 
+    def start_speaking(self, file: str):
+        """Start speaking from the speaker"""
+        logging.info("DUCK: Start speaking")
+        self.speaker.start(file)
 
-class AsyncDuck(object):
-    states = ["init", "pause", "break", "work"]
-
-    def __init__(self, user_id):
-        self.user_id = user_id
-        # t = threading.Thread(target=capture)
-        # t.start()
-
-        boot = dict(
-            trigger="boot",
-            source="init",
-            dest="pause",
-            before="sync",
-        )
-
-        temp = dict(
-            trigger="temp",
-            source="*",
-            dest="work",
-            before="greet",
-        )
-
-        self.machine = AsyncMachine(
-            model=self,
-            states=Duck.states,
-            transitions=[boot, temp],
-            initial="init",
-        )
-
-    async def greet(self):
-        print('hello!')
-
-    async def sync(self):
-        # TODO: Get configurations from a server
-        print("Getting configurations from the server")
-        await asyncio.sleep(1)
-        # TODO: quack!
-        print("Quack!")
+    def stop_speaking(self):
+        """Stop speaking from the speaker"""
+        logging.info("DUCK: Stop speaking")
+        self.speaker.stop()
