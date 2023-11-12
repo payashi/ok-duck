@@ -1,57 +1,76 @@
-import asyncio
-import time
+"""Abstract Duck with threading"""
 import threading
-from gpiozero import Button
-from transitions.extensions.asyncio import AsyncMachine
+import logging
+import base64
+import requests
+from requests.exceptions import RequestException
+from transitions import Machine
+from .recorder import Recorder
+from .speaker import Speaker
+from .settings import REC_CONFIG, SPK_CONFIG
 
-from .settings import CAPTURE_BUTTON, MODE_BUTTON
-from .capture_button import CaptureButton
-from .mode_button import ModeButton
+logging.basicConfig(
+    format="%(asctime)s.%(msecs)03d:%(threadName)s:%(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.DEBUG,
+)
+
+SERVER_URI = "http://localhost:8080"
+# SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
 
 
-class Duck(object):
-    states = ["init", "pause", "break", "work"]
+class LaptopDuck:
+    """Duck who can be run on a laptop"""
 
-    def __init__(self, user_id):
+    states = ["init", "pause", "work", "break", "busy"]
+
+    def __init__(self, user_id, server):
         self.user_id = user_id
-        # t = threading.Thread(target=capture)
-        # t.start()
-
-        transition = dict(
-            trigger="boot",
-            source="init",
-            dest="pause",
-            before="sync",
-        )
-
-        self.machine = AsyncMachine(
+        self.server = server
+        self.machine = Machine(
             model=self,
-            states=Duck.states,
-            transitions=[transition],
+            states=LaptopDuck.states,
             initial="init",
         )
+        self._lock = threading.Lock()
 
-    async def sync(self):
-        # TODO: Get configurations from a server
-        print("Getting configurations from the server")
-        await asyncio.sleep(1)
-        # TODO: quack!
-        print("Quack!")
+        self.recorder = Recorder(**REC_CONFIG)
+        self.speaker = Speaker(**SPK_CONFIG)
 
-if __name__ == "__main__":
-    duck = Duck("payashi")
+    def start_recording(self):
+        """Start listening to the mic"""
+        logging.info("DUCK: Start listening to your voice")
+        self.recorder.start()
 
-    asyncio.get_event_loop().run_until_complete(duck.boot())
+    def stop_recording(self):
+        """Stop listening to the mic"""
+        logging.info("DUCK: Stop listening to your voice")
+        self.recorder.stop()
+        self._send_audio(self.recorder.get_wav())
 
-    def long_callback():
-        print("long")
+    def start_speaking(self, file: str):
+        """Start speaking from the speaker"""
+        logging.info("DUCK: Start speaking")
+        self.speaker.start(file)
 
-    def short_callback():
-        print("short")
-    
-    cbtn = CaptureButton(CAPTURE_BUTTON, pull_up=True)
-    mbtn = ModeButton(
-        MODE_BUTTON, pull_up=True,
-        long_callback=long_callback,
-        short_callback=short_callback)
+    def stop_speaking(self):
+        """Stop speaking from the speaker"""
+        logging.info("DUCK: Stop speaking")
+        self.speaker.stop()
 
+    def _send_audio(self, audio: bytes):
+        data = {
+            "user_id": "payashi",
+            "duck_id": "duck01",
+            "audio": self._marshal_bytes(audio),
+        }
+
+        try:
+            response = requests.post(SERVER_URI, json=data, timeout=10)
+            response.raise_for_status()
+            logging.info("DUCK: Receive from server: %s", str(response.text))
+        except RequestException as e:
+            logging.exception("DUCK: Failed to request: %s", e.response)
+
+    def _marshal_bytes(self, data: bytes) -> str:
+        return base64.b64encode(data).decode("utf-8")

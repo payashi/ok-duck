@@ -5,6 +5,7 @@ from gpiozero import Button
 
 from .settings import CHANNELS, RATE, FORMAT, CHUNK
 
+
 class CaptureButton(Button):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -36,9 +37,10 @@ class CaptureButton(Button):
 
     def _released(self):
         # TODO: send audio data to a server via WebSocket API
-        with wave.open("captured.wav", 'wb') as wf:
-            wf.setnchannels(CHANNELS)
-            wf.setframerate(RATE)
-            wf.setsampwidth(self.audio.get_sample_size(FORMAT))
-            wf.writeframes(b''.join(self.frames))
+        wf = wave.open("captured.wav", "wb")
+        wf.setnchannels(CHANNELS)
+        wf.setframerate(RATE)
+        wf.setsampwidth(self.audio.get_sample_size(FORMAT))
+        wf.writeframes(b"".join(self.frames))
+        wf.close()
         print("Audio was saved")

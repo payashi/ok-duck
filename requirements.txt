@@ -1,5 +1,7 @@
-wave
 thread6
-pyaudio
+asyncio
 transitions
+pyaudio
+wave
 gpiozero
+websockets
