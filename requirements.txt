@@ -4,3 +4,4 @@ transitions
 pyaudio
 wave
 gpiozero
+websockets
