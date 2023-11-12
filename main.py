@@ -6,7 +6,7 @@ from secduck import LaptopDuck
 
 
 duck = LaptopDuck("payashi", "server")
-AUDIO_PATH = pathlib.Path(__file__).parent.joinpath("sample.wav")
+AUDIO_PATH = pathlib.Path(__file__).parent.joinpath("audio/sstar.wav")
 
 
 def key_detect():

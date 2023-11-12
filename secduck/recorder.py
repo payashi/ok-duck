@@ -1,8 +1,9 @@
 """Recorder class"""
 import threading
 import logging
-import pyaudio
 import wave
+import io
+import pyaudio
 
 logging.basicConfig(
     format="%(asctime)s.%(msecs)03d:%(threadName)s:%(message)s",
@@ -68,10 +69,20 @@ class Recorder:
 
     def _save(self):
         """Save `frames` as captured.wav file"""
-        # TODO: send audio data to a server via WebSocket API
         wf = wave.open("captured.wav", "wb")
         wf.setnchannels(self.nchannels)
         wf.setframerate(self.rate)
         wf.setsampwidth(self._audio.get_sample_size(self.sfmt))
         wf.writeframes(b"".join(self.frames))
         wf.close()
+
+    def get_wav(self) -> bytes:
+        """Get wav file from bytes"""
+        wav_data = io.BytesIO()
+        wf = wave.open(wav_data, "wb")
+        wf.setnchannels(self.nchannels)
+        wf.setframerate(self.rate)
+        wf.setsampwidth(self._audio.get_sample_size(self.sfmt))
+        wf.writeframes(b"".join(self.frames))
+        wf.close()
+        return wav_data.getvalue()

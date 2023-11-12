@@ -1,3 +1,4 @@
+"""Default Settings"""
 import pyaudio
 
 # Hardware Config
