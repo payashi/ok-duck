@@ -15,7 +15,8 @@ logging.basicConfig(
     level=logging.DEBUG,
 )
 
-SERVER_URI = "http://localhost:8080"
+# SERVER_URI = "http://localhost:8080"
+SERVER_URI = "http://localhost:8000"
 # SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
 
 

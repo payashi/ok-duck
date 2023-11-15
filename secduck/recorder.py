@@ -49,8 +49,6 @@ class Recorder:
             return
         self._running = False
 
-        self._save()
-
     def _record(self):
         """Record while `_running` is True"""
         stream = self._audio.open(
