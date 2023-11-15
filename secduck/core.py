@@ -15,19 +15,15 @@ logging.basicConfig(
     level=logging.DEBUG,
 )
 
-# SERVER_URI = "http://localhost:8080"
-SERVER_URI = "http://localhost:8000"
-# SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
-
 
 class LaptopDuck:
     """Duck who can be run on a laptop"""
 
     states = ["init", "pause", "work", "break", "busy"]
 
-    def __init__(self, user_id, server):
+    def __init__(self, user_id, server_uri):
         self.user_id = user_id
-        self.server = server
+        self.server_uri = server_uri
         self.machine = Machine(
             model=self,
             states=LaptopDuck.states,
@@ -67,7 +63,7 @@ class LaptopDuck:
         }
 
         try:
-            response = requests.post(SERVER_URI, json=data, timeout=10)
+            response = requests.post(self.server_uri, json=data, timeout=10)
             response.raise_for_status()
             logging.info("DUCK: Receive from server: %s", str(response.text))
         except RequestException as e:

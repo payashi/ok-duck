@@ -4,9 +4,12 @@ import threading
 import pathlib
 from secduck import LaptopDuck
 
+SERVER_URI = "http://localhost:8080"
+# SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
 
-duck = LaptopDuck("payashi", "server")
 AUDIO_PATH = pathlib.Path(__file__).parent.joinpath("audio/sstar.wav")
+
+duck = LaptopDuck("payashi", SERVER_URI)
 
 
 def key_detect():
