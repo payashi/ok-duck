@@ -14,10 +14,7 @@ REC_CONFIG = {
 }
 
 SPK_CONFIG = {
-    "nchannels": 1,
-    "rate": 44100 * 2,
     "chunk": 1024,
-    "sfmt": pyaudio.paInt16,
 }
 
 # Server Config

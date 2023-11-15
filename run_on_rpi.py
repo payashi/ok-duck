@@ -4,12 +4,12 @@ import pathlib
 from signal import pause
 from gpiozero import Button
 
-from secduck import LaptopDuck
+from secduck import Duck
 
 SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
 AUDIO_PATH = pathlib.Path(__file__).parent.joinpath("audio/sstar.wav")
 
-duck = LaptopDuck("payashi", SERVER_URI)
+duck = Duck("payashi", SERVER_URI)
 
 Button.was_held = False
 btn_a = Button(4, pull_up=True)

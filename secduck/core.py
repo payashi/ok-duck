@@ -1,5 +1,4 @@
 """Abstract Duck with threading"""
-import threading
 import logging
 import base64
 import requests
@@ -16,23 +15,39 @@ logging.basicConfig(
 )
 
 
-class LaptopDuck:
-    """Duck who can be run on a laptop"""
+class Duck:
+    """Duck which can be run either on a laptop or on a Raspberry Pi"""
 
     states = ["init", "pause", "work", "break", "busy"]
 
     def __init__(self, user_id, server_uri):
         self.user_id = user_id
         self.server_uri = server_uri
+
         self.machine = Machine(
             model=self,
-            states=LaptopDuck.states,
+            states=Duck.states,
             initial="init",
         )
-        self._lock = threading.Lock()
 
         self.recorder = Recorder(**REC_CONFIG)
         self.speaker = Speaker(**SPK_CONFIG)
+
+        self.machine.add_transition(
+            trigger="wake_up",
+            source="init",
+            dest="pause",
+            before="sync",
+            after="quack",
+        )
+
+    def sync(self):
+        """Sync user data with a server"""
+        logging.info("Synchronized user data with a server")
+
+    def quack(self):
+        """Say `Quack!`"""
+        self.speaker.start("audio/quack.wav")
 
     def start_recording(self):
         """Start listening to the mic"""
