@@ -1,4 +1,4 @@
-"""Playground"""
+"""Program which can be executed on a laptop"""
 
 import threading
 import pathlib
