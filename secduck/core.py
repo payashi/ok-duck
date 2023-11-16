@@ -1,9 +1,10 @@
 """Abstract Duck with threading"""
 import logging
 import base64
+from enum import Enum
+from io import BytesIO
 import requests
 from requests.exceptions import RequestException
-from transitions import Machine
 from .recorder import Recorder
 from .speaker import Speaker
 from .settings import REC_CONFIG, SPK_CONFIG
@@ -15,39 +16,87 @@ logging.basicConfig(
 )
 
 
+class DuckState(Enum):
+    """States Duck can take"""
+
+    INIT = 0
+    PAUSE = 1
+    WORK = 2
+    BREAK = 3
+    BUSY = 4
+
+
 class Duck:
     """Duck which can be run either on a laptop or on a Raspberry Pi"""
 
-    states = ["init", "pause", "work", "break", "busy"]
-
-    def __init__(self, user_id, server_uri):
+    def __init__(self, user_id, duck_id, server_uri, audio_volume: float = 1.0):
         self.user_id = user_id
+        self.duck_id = duck_id
         self.server_uri = server_uri
+        self.audio_volume = audio_volume
 
-        self.machine = Machine(
-            model=self,
-            states=Duck.states,
-            initial="init",
-        )
+        self.state = DuckState.INIT
 
         self.recorder = Recorder(**REC_CONFIG)
         self.speaker = Speaker(**SPK_CONFIG)
 
-        self.machine.add_transition(
-            trigger="wake_up",
-            source="init",
-            dest="pause",
-            before="sync",
-            after="quack",
-        )
-
-    def sync(self):
+    def wake_up(self):
         """Sync user data with a server"""
-        logging.info("Synchronized user data with a server")
+        if self.state != DuckState.INIT:
+            logging.error("DUCK: Cannot wake up from %s state.", self.state)
+        logging.info("Duck: Synchronized user data with a server")
+        self.state = DuckState.PAUSE
+        self._quack()
 
-    def quack(self):
+    def _quack(self):
         """Say `Quack!`"""
-        self.speaker.start("audio/quack.wav")
+        self.speaker.start("audio/quack.wav", self.audio_volume)
+
+    def detect_mode_switch(self):
+        """Switch its `state` and speak accordingly"""
+        if self.state == DuckState.PAUSE:
+            # Start work
+            self.state = DuckState.BUSY
+            self._start_work()
+            self.state = DuckState.WORK
+
+        elif self.state == DuckState.WORK:
+            # Pause work
+            self.state = DuckState.BUSY
+            self._pause_work()
+            self.state = DuckState.PAUSE
+        else:
+            logging.error("DUCK: cannot switch state while %s", self.state)
+
+    def _start_work(self):
+        """Mention the start of the work"""
+        params = {"user_id": self.user_id, "duck_id": self.duck_id}
+        try:
+            response = requests.get(
+                f"{self.server_uri}/start_work", params=params, timeout=10
+            )
+            response.raise_for_status()
+            logging.info("DUCK: Receive from server: %s", str(response.json()["text"]))
+            audio = BytesIO(self._unmarshal(response.json()["audio"]))
+            self.speaker.start(audio, self.audio_volume)
+
+        except RequestException as e:
+            logging.exception("DUCK: Failed to request: %s", e.response)
+
+    def _pause_work(self):
+        """Mention the pause of the work"""
+        params = {"user_id": self.user_id}
+        try:
+            response = requests.get(
+                f"{self.server_uri}/pause_work", params=params, timeout=10
+            )
+            response.raise_for_status()
+            logging.info("DUCK: Receive from server: %s", str(response.json()["text"]))
+            audio = BytesIO(self._unmarshal(response.json()["audio"]))
+            self.speaker.start(audio, self.audio_volume)
+
+        except RequestException as e:
+            logging.exception("DUCK: Failed to request: %s", e.response)
 
     def start_recording(self):
         """Start listening to the mic"""
@@ -60,21 +109,11 @@ class Duck:
         self.recorder.stop()
         self._send_audio(self.recorder.get_wav())
 
-    def start_speaking(self, file: str):
-        """Start speaking from the speaker"""
-        logging.info("DUCK: Start speaking")
-        self.speaker.start(file)
-
-    def stop_speaking(self):
-        """Stop speaking from the speaker"""
-        logging.info("DUCK: Stop speaking")
-        self.speaker.stop()
-
     def _send_audio(self, audio: bytes):
         data = {
-            "user_id": "payashi",
-            "duck_id": "duck01",
-            "audio": self._marshal_bytes(audio),
+            "user_id": self.user_id,
+            "duck_id": self.duck_id,
+            "audio": self._marshal(audio),
         }
 
         try:
@@ -84,5 +123,8 @@ class Duck:
         except RequestException as e:
             logging.exception("DUCK: Failed to request: %s", e.response)
 
-    def _marshal_bytes(self, data: bytes) -> str:
+    def _marshal(self, data: bytes) -> str:
         return base64.b64encode(data).decode("utf-8")
+
+    def _unmarshal(self, data: str) -> bytes:
+        return base64.b64decode(data.encode("utf-8"))

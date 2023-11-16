@@ -2,6 +2,8 @@
 import logging
 import wave
 import threading
+from io import BytesIO
+from typing import Union
 import numpy as np
 
 import pyaudio
@@ -18,32 +20,26 @@ class Speaker:
 
         self._audio = pyaudio.PyAudio()
 
-    def start(self, file: str):
+    def start(self, file: Union[str, BytesIO], volume: float = 1.0):
         """Start playing sound"""
-        if self._running or self._thread is not None:
-            logging.warning("Speaker is already running")
-            self.stop()
-        self._running = True
+        if self._running:
+            logging.warning("SPEAKER: Speaker is already running")
+            self._running = False
 
+        if self._thread is not None:
+            self._thread.join()
+            self._thread = None
+
+        self._running = True
         self._thread = threading.Thread(
             target=self._play,
-            args=(file,),
+            args=(file, volume),
             daemon=True,
         )
         self._thread.start()
 
-    def stop(self):
-        """Stop playing sound"""
-        if not self._running or self._thread is None:
-            logging.warning("Speaker is already stopped")
-            return
-        self._running = False
-        self._thread.join()
-        self._thread = None
-
-    def _play(self, file: str, volume: float = 1.0):
+    def _play(self, file: Union[str, BytesIO], volume: float):
         """Play an audio `file`"""
-
         wf = wave.open(file, "rb")
 
         stream = self._audio.open(
@@ -57,13 +53,16 @@ class Speaker:
         audio_dtype = self._get_dtype(wf.getsampwidth())
         raw_bytes = wf.readframes(self.chunk)
 
-        while raw_bytes != "" and self._running:
+        while len(raw_bytes) > 0 and self._running:
             raw_npdata = np.frombuffer(raw_bytes, dtype=audio_dtype)
             gained_npdata = raw_npdata * volume
             gained_bytes = gained_npdata.astype(audio_dtype).tobytes()
 
             stream.write(gained_bytes)
             raw_bytes = wf.readframes(self.chunk)
+
+        wf.close()
+        self._running = False
 
     def _get_dtype(self, sampwidth: int) -> type:
         if sampwidth == 2:

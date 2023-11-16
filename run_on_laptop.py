@@ -1,17 +1,14 @@
 """Program which can be executed on a laptop"""
 
 import threading
-import pathlib
 from secduck import Duck
 
 SERVER_URI = "http://localhost:8080"
 # SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
 
-AUDIO_PATH = pathlib.Path(__file__).parent.joinpath("audio/sstar.wav")
+duck = Duck("payashi", "laptop-duck", SERVER_URI, 1.0)
 
-duck = Duck("payashi", SERVER_URI)
-
-duck.wake_up()  # pylint: disable=no-member
+duck.wake_up()
 
 
 def key_detect():
@@ -22,10 +19,8 @@ def key_detect():
             duck.start_recording()
         elif val == "stop recording":
             duck.stop_recording()
-        elif val == "start speaking":
-            duck.start_speaking(str(AUDIO_PATH))
-        elif val == "stop speaking":
-            duck.stop_speaking()
+        elif val == "push mode":
+            duck.detect_mode_switch()
 
 
 gpio_thread = threading.Thread(target=key_detect)
