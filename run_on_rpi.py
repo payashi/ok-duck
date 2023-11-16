@@ -20,7 +20,7 @@ btn_a.when_released = duck.stop_recording
 def long_press(button):
     button.was_held = True
     print("long press")
-    duck.stop_speaking()
+    duck.start_review()
 
 
 def short_press(button):

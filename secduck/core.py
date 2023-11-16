@@ -57,18 +57,18 @@ class Duck:
         if self.state == DuckState.PAUSE:
             # Start work
             self.state = DuckState.BUSY
-            self._start_work()
+            self.start_work()
             self.state = DuckState.WORK
 
         elif self.state == DuckState.WORK:
             # Pause work
             self.state = DuckState.BUSY
-            self._pause_work()
+            self.pause_work()
             self.state = DuckState.PAUSE
         else:
             logging.error("DUCK: cannot switch state while %s", self.state)
 
-    def _start_work(self):
+    def start_work(self):
         """Mention the start of the work"""
         params = {"user_id": self.user_id, "duck_id": self.duck_id}
         try:
@@ -83,7 +83,7 @@ class Duck:
         except RequestException as e:
             logging.exception("DUCK: Failed to request: %s", e.response)
 
-    def _pause_work(self):
+    def pause_work(self):
         """Mention the pause of the work"""
         params = {"user_id": self.user_id}
         try:
@@ -97,6 +97,25 @@ class Duck:
 
         except RequestException as e:
             logging.exception("DUCK: Failed to request: %s", e.response)
+
+    def start_review(self):
+        """Mention the start of the review"""
+        # if self.state == DuckState.
+        self.state = DuckState.BUSY
+        params = {"user_id": self.user_id, "duck_id": self.duck_id}
+        try:
+            response = requests.get(
+                f"{self.server_uri}/start_review", params=params, timeout=10
+            )
+            response.raise_for_status()
+            logging.info("DUCK: Receive from server: %s", str(response.json()["text"]))
+            audio = BytesIO(self._unmarshal(response.json()["audio"]))
+            self.speaker.start(audio, self.audio_volume)
+
+        except RequestException as e:
+            logging.exception("DUCK: Failed to request: %s", e.response)
+
+        self.state = DuckState.PAUSE
 
     def start_recording(self):
         """Start listening to the mic"""
