@@ -2,7 +2,7 @@
 import threading
 import logging
 import wave
-import io
+from io import BytesIO
 import pyaudio
 
 logging.basicConfig(
@@ -49,8 +49,6 @@ class Recorder:
             return
         self._running = False
 
-        self._save()
-
     def _record(self):
         """Record while `_running` is True"""
         stream = self._audio.open(
@@ -78,7 +76,7 @@ class Recorder:
 
     def get_wav(self) -> bytes:
         """Get wav file from bytes"""
-        wav_data = io.BytesIO()
+        wav_data = BytesIO()
         wf = wave.open(wav_data, "wb")
         wf.setnchannels(self.nchannels)
         wf.setframerate(self.rate)

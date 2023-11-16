@@ -4,4 +4,4 @@
 # from .capture_button import CaptureButton
 from .recorder import Recorder
 from .speaker import Speaker
-from .core import LaptopDuck
+from .core import Duck
