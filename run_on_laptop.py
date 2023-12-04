@@ -20,9 +20,11 @@ def key_detect():
         elif val == "stop recording":
             duck.stop_recording()
         elif val == "short push":
-            duck.detect_mode_switch()
+            duck.detect_short_press()
         elif val == "long push":
-            duck.start_review()
+            duck.detect_long_press()
+        elif val == 'power off':
+            duck.detect_power_off()
 
 
 gpio_thread = threading.Thread(target=key_detect)

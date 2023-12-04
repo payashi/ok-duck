@@ -52,21 +52,45 @@ class Duck:
         """Say `Quack!`"""
         self.speaker.start("audio/quack.wav", self.audio_volume)
 
-    def detect_mode_switch(self):
+    def detect_long_press(self): # long push
         """Switch its `state` and speak accordingly"""
-        if self.state == DuckState.PAUSE:
-            # Start work
+        if self.state in [DuckState.PAUSE, DuckState.WORK]:
+            # Start Break
+            self.state = DuckState.BUSY
+            self.start_break()
+            self.state = DuckState.BREAK
+
+        elif self.state == DuckState.BREAK:
+            # Start Work
             self.state = DuckState.BUSY
             self.start_work()
             self.state = DuckState.WORK
-
-        elif self.state == DuckState.WORK:
-            # Pause work
-            self.state = DuckState.BUSY
-            self.pause_work()
-            self.state = DuckState.PAUSE
         else:
             logging.error("DUCK: cannot switch state while %s", self.state)
+
+    def detect_short_press(self):
+        """Switch its `state` and speak accordingly"""
+        if self.state in [DuckState.BREAK, DuckState.WORK]:
+            # Start Pause
+            self.state = DuckState.BUSY
+            self.start_pause()
+            self.state = DuckState.PAUSE
+
+        elif self.state == DuckState.PAUSE:
+            # Start Work
+            self.state = DuckState.BUSY
+            self.start_work()
+            self.state = DuckState.WORK
+        else:
+            logging.error("DUCK: cannot switch state while %s", self.state)
+
+    def detect_power_off(self):
+        '''Start security review and shut it down after confirmation prompt'''
+        # Prompt for serurity review
+        # Detect end of the talking from a user
+        # Confirm if it is ok to shut down
+        # detect power_off button again
+        # call(["sudo", "shutdown", "-h", "now"])
 
     def start_work(self):
         """Mention the start of the work"""
@@ -83,12 +107,12 @@ class Duck:
         except RequestException as e:
             logging.exception("DUCK: Failed to request: %s", e.response)
 
-    def pause_work(self):
+    def start_pause(self):
         """Mention the pause of the work"""
         params = {"user_id": self.user_id, "duck_id": self.duck_id}
         try:
             response = requests.get(
-                f"{self.server_uri}/pause_work", params=params, timeout=10
+                f"{self.server_uri}/start_pause", params=params, timeout=10
             )
             response.raise_for_status()
             logging.info("DUCK: Receive from server: %s", str(response.json()["text"]))
@@ -97,6 +121,9 @@ class Duck:
 
         except RequestException as e:
             logging.exception("DUCK: Failed to request: %s", e.response)
+
+    def start_break(self):
+        pass
 
     def start_review(self):
         """Mention the start of the review"""
