@@ -3,8 +3,8 @@
 import threading
 from secduck import Duck
 
-SERVER_URI = "http://localhost:8080"
-# SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
+# SERVER_URI = "http://localhost:8080"
+SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
 
 duck = Duck("payashi", "laptop-duck", SERVER_URI, 1.0)
 

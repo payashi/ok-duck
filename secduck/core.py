@@ -85,7 +85,7 @@ class Duck:
 
     def pause_work(self):
         """Mention the pause of the work"""
-        params = {"user_id": self.user_id}
+        params = {"user_id": self.user_id, "duck_id": self.duck_id}
         try:
             response = requests.get(
                 f"{self.server_uri}/pause_work", params=params, timeout=10
