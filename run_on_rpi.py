@@ -1,38 +1,23 @@
 """Program which can be executed on a Raspberry Pi"""
 
 from signal import pause
-from gpiozero import Button
+from secduck import DeviceInput, DeviceOutput, Connector, Speaker, Recorder, Duck
 
-from secduck import Duck
-
-SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
-
-duck = Duck("payashi", "rpi-duck", SERVER_URI, 2.0)
-
-Button.was_held = False
-btn_a = Button(4, pull_up=True)
-btn_b = Button(14, pull_up=True)
-
-btn_a.when_pressed = duck.start_recording
-btn_a.when_released = duck.stop_recording
+SERVER_URL = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
 
 
-def long_press(button):
-    button.was_held = True
-    print("long press")
-    duck.start_review()
+device_input = DeviceInput()
+device_output = DeviceOutput()
+connector = Connector(SERVER_URL)
+speaker = Speaker()
+recorder = Recorder()
+duck = Duck(device_input, device_output, connector, speaker, recorder)
 
 
-def short_press(button):
-    if not button.was_held:
-        print("short press")
-        duck.detect_mode_switch()
-    button.was_held = False
+try:
+    duck.on_wakeup()
 
+    pause()
 
-btn_b.when_held = long_press
-btn_b.when_released = short_press
-
-duck.wake_up()
-
-pause()
+finally:
+    print('Shutting down...')

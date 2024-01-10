@@ -5,22 +5,17 @@ import wave
 from io import BytesIO
 import pyaudio
 
-logging.basicConfig(
-    format="%(asctime)s.%(msecs)03d:%(threadName)s:%(message)s",
-    datefmt="%H:%M:%S",
-    level=logging.INFO,
-)
-
+logger = logging.getLogger('Recorder')
 
 class Recorder:
     """Audio Recorder"""
 
     def __init__(
         self,
-        nchannels: int,
-        rate: int,
-        sfmt: int,
-        chunk: int,
+        nchannels: int = 1,
+        rate: int = 44100,
+        sfmt: int = pyaudio.paInt16,
+        chunk: int = 1024,
     ):
         self.nchannels = nchannels
         self.rate = rate
@@ -34,8 +29,9 @@ class Recorder:
 
     def start(self):
         """Start recording"""
+        logger.info('Start recording')
         if self._running:
-            logging.warning("Recorder is already running")
+            logger.warning("Already running")
             return
         self._running = True
 
@@ -44,8 +40,9 @@ class Recorder:
 
     def stop(self):
         """Stop recording"""
+        logger.info('Stop recording')
         if not self._running:
-            logging.warning("Recorder is already stopped")
+            logging.warning("Already stopped")
             return
         self._running = False
 
@@ -65,22 +62,13 @@ class Recorder:
         stream.stop_stream()
         stream.close()
 
-    def _save(self):
-        """Save `frames` as captured.wav file"""
-        wf = wave.open("captured.wav", "wb")
+    def export(self) -> BytesIO:
+        """Export recorded data as BytesIO"""
+        file = BytesIO()
+        wf = wave.open(file, "wb")
         wf.setnchannels(self.nchannels)
         wf.setframerate(self.rate)
         wf.setsampwidth(self._audio.get_sample_size(self.sfmt))
         wf.writeframes(b"".join(self.frames))
         wf.close()
-
-    def get_wav(self) -> bytes:
-        """Get wav file from bytes"""
-        wav_data = BytesIO()
-        wf = wave.open(wav_data, "wb")
-        wf.setnchannels(self.nchannels)
-        wf.setframerate(self.rate)
-        wf.setsampwidth(self._audio.get_sample_size(self.sfmt))
-        wf.writeframes(b"".join(self.frames))
-        wf.close()
-        return wav_data.getvalue()
+        return file

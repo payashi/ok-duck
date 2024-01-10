@@ -1,30 +1,32 @@
 """Program which can be executed on a laptop"""
 
-import threading
-from secduck import Duck
+import logging
+from signal import pause
+from secduck import DeviceInput, DeviceOutput, Connector, Speaker, Recorder, Duck
 
-# SERVER_URI = "http://localhost:8080"
-SERVER_URI = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
+# SERVER_URL = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
+SERVER_URL = "http://localhost:8080"
+VIRTUAL = True
 
-duck = Duck("payashi", "laptop-duck", SERVER_URI, 1.0)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname).4s - [%(name)s] %(message)s',
+    datefmt='%H:%M:%S'
+)
 
-duck.wake_up()
-
-
-def key_detect():
-    """Detect a key to press"""
-    while True:
-        val = input()
-        if val == "start recording":
-            duck.start_recording()
-        elif val == "stop recording":
-            duck.stop_recording()
-        elif val == "short push":
-            duck.detect_mode_switch()
-        elif val == "long push":
-            duck.start_review()
+duck = Duck(
+    device_input=DeviceInput(VIRTUAL),
+    device_output=DeviceOutput(VIRTUAL),
+    connector=Connector(SERVER_URL),
+    speaker=Speaker(),
+    recorder=Recorder(),
+)
 
 
-gpio_thread = threading.Thread(target=key_detect)
+try:
+    duck.on_wakeup()
+    pause()
 
-gpio_thread.start()
+finally:
+    duck.on_exit()
+    print('Shutting down...')

@@ -9,19 +9,13 @@ from .recorder import Recorder
 from .speaker import Speaker
 from .settings import REC_CONFIG, SPK_CONFIG
 
-logging.basicConfig(
-    format="%(asctime)s.%(msecs)03d:%(threadName)s:%(message)s",
-    datefmt="%H:%M:%S",
-    level=logging.DEBUG,
-)
-
 
 class DuckState(Enum):
     """States Duck can take"""
 
     INIT = 0
     PAUSE = 1
-    WORK = 2
+    FOCUS = 2
     BREAK = 3
     BUSY = 4
 
@@ -29,11 +23,12 @@ class DuckState(Enum):
 class Duck:
     """Duck which can be run either on a laptop or on a Raspberry Pi"""
 
-    def __init__(self, user_id, duck_id, server_uri, audio_volume: float = 1.0):
+    def __init__(
+        self, user_id, duck_id, server_uri,
+    ):
         self.user_id = user_id
         self.duck_id = duck_id
         self.server_uri = server_uri
-        self.audio_volume = audio_volume
 
         self.state = DuckState.INIT
 
@@ -50,25 +45,9 @@ class Duck:
 
     def _quack(self):
         """Say `Quack!`"""
-        self.speaker.start("audio/quack.wav", self.audio_volume)
+        self.speaker.start("audio/quack.wav", 1.0)
 
-    def detect_mode_switch(self):
-        """Switch its `state` and speak accordingly"""
-        if self.state == DuckState.PAUSE:
-            # Start work
-            self.state = DuckState.BUSY
-            self.start_work()
-            self.state = DuckState.WORK
-
-        elif self.state == DuckState.WORK:
-            # Pause work
-            self.state = DuckState.BUSY
-            self.pause_work()
-            self.state = DuckState.PAUSE
-        else:
-            logging.error("DUCK: cannot switch state while %s", self.state)
-
-    def start_work(self):
+    def on_focus(self):
         """Mention the start of the work"""
         params = {"user_id": self.user_id, "duck_id": self.duck_id}
         try:
@@ -78,27 +57,30 @@ class Duck:
             response.raise_for_status()
             logging.info("DUCK: Receive from server: %s", str(response.json()["text"]))
             audio = BytesIO(self._unmarshal(response.json()["audio"]))
-            self.speaker.start(audio, self.audio_volume)
+            self.speaker.start(audio, 1.0)
 
         except RequestException as e:
             logging.exception("DUCK: Failed to request: %s", e.response)
 
-    def pause_work(self):
+    def on_pause(self):
         """Mention the pause of the work"""
         params = {"user_id": self.user_id, "duck_id": self.duck_id}
         try:
             response = requests.get(
-                f"{self.server_uri}/pause_work", params=params, timeout=10
+                f"{self.server_uri}/start_pause", params=params, timeout=10
             )
             response.raise_for_status()
             logging.info("DUCK: Receive from server: %s", str(response.json()["text"]))
             audio = BytesIO(self._unmarshal(response.json()["audio"]))
-            self.speaker.start(audio, self.audio_volume)
+            self.speaker.start(audio, 1.0)
 
         except RequestException as e:
             logging.exception("DUCK: Failed to request: %s", e.response)
 
-    def start_review(self):
+    def on_break(self):
+        pass
+
+    def on_review(self):
         """Mention the start of the review"""
         # if self.state == DuckState.
         self.state = DuckState.BUSY
@@ -110,7 +92,7 @@ class Duck:
             response.raise_for_status()
             logging.info("DUCK: Receive from server: %s", str(response.json()["text"]))
             audio = BytesIO(self._unmarshal(response.json()["audio"]))
-            self.speaker.start(audio, self.audio_volume)
+            self.speaker.start(audio, 1.0)
 
         except RequestException as e:
             logging.exception("DUCK: Failed to request: %s", e.response)
@@ -142,8 +124,5 @@ class Duck:
         except RequestException as e:
             logging.exception("DUCK: Failed to request: %s", e.response)
 
-    def _marshal(self, data: bytes) -> str:
-        return base64.b64encode(data).decode("utf-8")
-
-    def _unmarshal(self, data: str) -> bytes:
-        return base64.b64decode(data.encode("utf-8"))
+    def on_exit(self):
+        pass
