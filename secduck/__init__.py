@@ -1,7 +1,8 @@
 """init file for `secduck` package"""
 
-# from .mode_button import ModeButton, AsyncModeButton
-# from .capture_button import CaptureButton
+from .device_input import DeviceInput, HoldableButton
+from .device_output import DeviceOutput
 from .recorder import Recorder
 from .speaker import Speaker
-from .core import Duck
+from .connector import Connector
+from .duck import Duck
