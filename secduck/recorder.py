@@ -62,7 +62,7 @@ class Recorder:
         stream.stop_stream()
         stream.close()
 
-    def export(self) -> BytesIO:
+    def export(self) -> bytes:
         """Export recorded data as BytesIO"""
         file = BytesIO()
         wf = wave.open(file, "wb")
@@ -71,4 +71,4 @@ class Recorder:
         wf.setsampwidth(self._audio.get_sample_size(self.sfmt))
         wf.writeframes(b"".join(self.frames))
         wf.close()
-        return file
+        return file.getvalue()

@@ -78,7 +78,7 @@ class Speaker:
 
         wf.close()
         self._running = False
-        logger.error('Finish playing')
+        logger.info('Finish playing')
 
     def _get_dtype(self, sampwidth: int) -> type:
         if sampwidth == 2:

@@ -24,6 +24,7 @@ class DeviceInput:
         self.on_start_recording = lambda: None
         self.on_stop_recording = lambda: None
         self.on_review = lambda: None
+        self.on_sync = lambda: None
 
         if self.virtual:
             t = threading.Thread(target=self.key_detect)
@@ -41,7 +42,7 @@ class DeviceInput:
             self.record_btn.when_pressed = self._on_start_recording
             self.record_btn.when_released = self._on_stop_recording
             self.pause_btn.long_callback = self._on_review
-
+            self.focus_btn.long_callback = self._on_sync
 
     def _on_pause(self):
         '''Called when the pause button is pressed.'''
@@ -73,6 +74,11 @@ class DeviceInput:
         logger.info('Detect pause button hold')
         self.on_review()
 
+    def _on_sync(self):
+        '''Called when the focus button is held for a long time.'''
+        logger.info('Detect focus button hold')
+        self.on_sync()
+
 
     @property
     def volume(self):
@@ -86,18 +92,20 @@ class DeviceInput:
         """Detect a key to press"""
         while True:
             val = input()
-            if val == "on_pause":
+            if val == "pause":
                 self._on_pause()
-            elif val == "on_break":
+            elif val == "break":
                 self._on_break()
-            elif val == 'on_focus':
+            elif val == 'focus':
                 self._on_focus()
             elif val == "start_recording":
                 self._on_start_recording()
             elif val == "stop_recording":
                 self._on_stop_recording()
-            elif val == "on_review":
+            elif val == "review":
                 self._on_review()
+            elif val == "sync":
+                self._on_sync()
             elif val == "quit":
                 break
 

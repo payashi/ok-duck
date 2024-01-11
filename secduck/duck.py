@@ -51,6 +51,9 @@ class Duck:
         self.device_input.on_start_recording = self.on_start_recording
         self.device_input.on_stop_recording = self.on_stop_recording
         self.device_input.on_review = self.on_review
+        self.device_input.on_sync = self.on_sync
+
+        self.on_sync()
 
     def on_pause(self):
         '''Duck starts pausing.'''
@@ -60,9 +63,10 @@ class Duck:
             return
         self.state = DuckState.BUSY
         self.device_output.on_pause()
-        audio = self.connector.send('pause')
+        audio = self.connector.fetch('pause')
         if audio:
             self.speaker.start(audio, self.device_input.volume)
+        self.connector.log_prompt('pause')
         self.state = DuckState.PAUSE
 
     def on_break(self):
@@ -73,7 +77,7 @@ class Duck:
             return
         self.state = DuckState.BUSY
         self.device_output.on_break()
-        audio = self.connector.send('break')
+        audio = self.connector.fetch('break')
         if audio:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.BREAK
@@ -88,7 +92,7 @@ class Duck:
             return
         self.state = DuckState.BUSY
         self.device_output.on_focus()
-        audio = self.connector.send('focus')
+        audio = self.connector.fetch('focus')
         if audio:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.FOCUS
@@ -103,7 +107,7 @@ class Duck:
             return
         self.state = DuckState.BUSY
         self.device_output.on_review()
-        audio = self.connector.send('review')
+        audio = self.connector.fetch('review')
         if audio:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.PAUSE
@@ -118,8 +122,7 @@ class Duck:
         logger.info("Stop recording")
         self.recorder.stop()
         audio = self.recorder.export()
-        with open("out.wav", "wb") as outfile:
-            outfile.write(audio.getbuffer())
+        self.connector.log_record(audio)
 
     def on_wakeup(self):
         '''Duck wakes up.'''
@@ -127,7 +130,7 @@ class Duck:
         if self.state == DuckState.BUSY:
             logger.warning("Busy now")
             return
-        audio = self.connector.send('wakeup')
+        audio = self.connector.fetch('wakeup')
         if audio:
             self.speaker.start(audio, self.device_input.volume)
 
@@ -137,9 +140,14 @@ class Duck:
         if self.state == DuckState.BUSY:
             logger.warning("Busy now")
             return
-        audio = self.connector.send('exit')
+        audio = self.connector.fetch('exit')
         if audio:
             self.speaker.start(audio, self.device_input.volume)
+
+    def on_sync(self):
+        '''Duck syncs.'''
+        logger.info("Sync")
+        self.connector.sync()
 
     async def reserve(self, duration: int, callback):
         '''Callback after duration.'''
