@@ -2,7 +2,7 @@
 import logging
 from io import BytesIO
 from typing import Optional
-from os import path
+from os import path, system
 from datetime import datetime
 
 import base64
@@ -19,6 +19,8 @@ ALL_PROMPT_IDS = [
     'exit',
     'review',
 ]
+X_DIC = '/var/lib/mecab/dic/open-jtalk/naist-jdic'
+M_VOICE = '/usr/share/hts-voice/mei_happy.htsvoice'
 
 class Connector:
     '''
@@ -62,17 +64,13 @@ class Connector:
                 f"{self.server_url}/sync",
                 headers={'Content-Type': 'application/json'},
                 json=data,
-                timeout=10
+                timeout=60,
             )
             response.raise_for_status()
             for prompt_id in prompt_ids:
                 prompt = response.json()[prompt_id]
-                audio: bytes = self.unmarshal(prompt['audio'])
                 text: str = prompt['text']
-
-                with open(f'prompts/{prompt_id}.wav', 'wb') as f:
-                    f.write(audio)
-
+                self.synthesize(prompt_id, text)
                 self.prompt_texts[prompt_id] = text
 
                 logger.info("Synced %s", prompt_id)
@@ -94,7 +92,7 @@ class Connector:
                 f"{self.server_url}/log/prompt",
                 headers={'Content-Type': 'application/json'},
                 json=data,
-                timeout=10
+                timeout=60,
             )
             response.raise_for_status()
 
@@ -116,13 +114,22 @@ class Connector:
                 f"{self.server_url}/log/record",
                 headers={'Content-Type': 'application/json'},
                 json=data,
-                timeout=10
+                timeout=60,
             )
             response.raise_for_status()
 
         except RequestException as e:
             logger.exception("Failed to request: %s", e.response)
             return
+
+    def synthesize(self, prompt_id: str, text: str, speed: float=1.15):
+        '''Synthesize text to audio'''
+        system(f"echo {text} | open_jtalk -x {X_DIC} -m {M_VOICE} -r {speed} -ow prompts/{prompt_id}.wav")
+
+        # c = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+        # c.stdin.write(t.encode('utf-8'))
+        # c.stdin.close()
+        # c.wait()
 
     def marshal(self, data: bytes) -> str:
         '''Convert bytes to base64 string'''
