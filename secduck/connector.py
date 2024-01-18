@@ -20,7 +20,7 @@ ALL_PROMPT_IDS = [
     'review',
 ]
 X_DIC = '/var/lib/mecab/dic/open-jtalk/naist-jdic'
-M_VOICE = '/usr/share/hts-voice/mei_happy.htsvoice'
+M_VOICE = '/usr/share/hts-voice/mei_normal.htsvoice'
 
 class Connector:
     '''
@@ -34,7 +34,7 @@ class Connector:
 
     def fetch(self, prompt_id: str) -> Optional[BytesIO]:
         '''Fetch audio from server'''
-        file_path = f'prompts/{prompt_id}.wav'
+        file_path = path.join(path.dirname(__file__), '..', 'prompts', f'{prompt_id}.wav')
 
         # Fetch from server if the file doesn't exist on local
         if path.exists(file_path) is False:
@@ -108,7 +108,7 @@ class Connector:
             "created_at": datetime.now().timestamp(),
             "audio": self.marshal(audio),
         }
-        logger.info("Send record log(%s) to server")
+        logger.info("Send record log to server")
         try:
             response = requests.post(
                 f"{self.server_url}/log/record",

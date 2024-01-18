@@ -6,7 +6,7 @@ from secduck import DeviceInput, DeviceOutput, Connector, Speaker, Recorder, Duc
 
 # SERVER_URL = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
 SERVER_URL = "http://localhost:8080"
-VIRTUAL = True
+IS_VIRTUAL = True
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -15,8 +15,8 @@ logging.basicConfig(
 )
 
 duck = Duck(
-    device_input=DeviceInput(VIRTUAL),
-    device_output=DeviceOutput(VIRTUAL),
+    device_input=DeviceInput(IS_VIRTUAL, spi=False),
+    device_output=DeviceOutput(IS_VIRTUAL),
     connector=Connector(SERVER_URL),
     speaker=Speaker(),
     recorder=Recorder(),

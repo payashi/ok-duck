@@ -15,7 +15,7 @@ class DeviceInput:
         virtual: Whether the input devices are virtual.
     '''
 
-    def __init__(self, virtual:bool=False):
+    def __init__(self, virtual:bool=False, spi:bool=True):
         self.virtual = virtual
 
         self.on_pause = lambda: None
@@ -34,7 +34,13 @@ class DeviceInput:
             self.break_btn = HoldableButton(17, pull_up=True)
             self.focus_btn = HoldableButton(27, pull_up=True)
             self.record_btn = HoldableButton(22, pull_up=True)
-            self.pot = MCP3008(0) # Channel 0
+            if spi:
+                self.pot = MCP3008(0) # Channel 0
+            else:
+                class Pot:
+                    '''A mock class that represents a potentiometer.'''
+                self.pot = Pot()
+                self.pot.value = 1.0
 
             self.pause_btn.short_callback = self._on_pause
             self.break_btn.short_callback = self._on_break
@@ -84,9 +90,9 @@ class DeviceInput:
     def volume(self):
         """Get the volume"""
         if self.virtual:
-            return 1.0
+            return 4.0
         else:
-            return self.pot.value
+            return self.pot.value * 4.0
 
     def key_detect(self):
         """Detect a key to press"""
