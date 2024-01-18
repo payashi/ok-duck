@@ -1,5 +1,4 @@
 import os
 
-print(__file__)
-print(os.path.dirname(__file__))
-print(os.path.join(__file__, '../prompts'))
+path = os.path.join(os.path.dirname(__file__), 'prompts', 'hoge.wav')
+print(path)

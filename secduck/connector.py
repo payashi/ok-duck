@@ -22,6 +22,8 @@ ALL_PROMPT_IDS = [
 X_DIC = '/var/lib/mecab/dic/open-jtalk/naist-jdic'
 M_VOICE = '/usr/share/hts-voice/mei_normal.htsvoice'
 
+PROMPTS_PATH = path.join(path.dirname(__file__), '..', 'prompts')
+
 class Connector:
     '''
     Connector class to fetch audio from server
@@ -34,7 +36,7 @@ class Connector:
 
     def fetch(self, prompt_id: str) -> Optional[BytesIO]:
         '''Fetch audio from server'''
-        file_path = path.join(path.dirname(__file__), '..', 'prompts', f'{prompt_id}.wav')
+        file_path = path.join(PROMPTS_PATH, f'{prompt_id}.wav')
 
         # Fetch from server if the file doesn't exist on local
         if path.exists(file_path) is False:
@@ -124,12 +126,7 @@ class Connector:
 
     def synthesize(self, prompt_id: str, text: str, speed: float=1.15):
         '''Synthesize text to audio'''
-        system(f"echo {text} | open_jtalk -x {X_DIC} -m {M_VOICE} -r {speed} -ow prompts/{prompt_id}.wav")
-
-        # c = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-        # c.stdin.write(t.encode('utf-8'))
-        # c.stdin.close()
-        # c.wait()
+        system(f"echo {text} | open_jtalk -x {X_DIC} -m {M_VOICE} -r {speed} -ow {path.join(PROMPTS_PATH, f'{prompt_id}.wav')}")
 
     def marshal(self, data: bytes) -> str:
         '''Convert bytes to base64 string'''
