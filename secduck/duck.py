@@ -4,7 +4,7 @@ A class that represents the Duck.
 
 from enum import Enum
 import logging
-import asyncio
+from threading import Timer
 
 from .recorder import Recorder
 from .speaker import Speaker
@@ -53,7 +53,11 @@ class Duck:
         self.device_input.on_review = self.on_review
         self.device_input.on_sync = self.on_sync
 
+        self.device_input.on_before = self.on_before
+
         self.on_sync()
+
+        self.timer = None
 
     def on_pause(self):
         '''Duck starts pausing.'''
@@ -82,7 +86,8 @@ class Duck:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.BREAK
 
-        asyncio.run(self.reserve(5*60, self.on_focus))
+        self.timer = Timer(5*60, self.on_focus)
+        self.timer.start()
 
     def on_focus(self):
         '''Duck starts focusing.'''
@@ -97,7 +102,8 @@ class Duck:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.FOCUS
 
-        asyncio.run(self.reserve(25*60, self.on_focus))
+        self.timer = Timer(25*60, self.on_break)
+        self.timer.start()
 
     def on_review(self):
         '''Duck starts reviewing.'''
@@ -149,7 +155,9 @@ class Duck:
         logger.info("Sync")
         self.connector.sync()
 
-    async def reserve(self, duration: int, callback):
-        '''Callback after duration.'''
-        await asyncio.sleep(duration)
-        callback()
+    def on_before(self):
+        '''Callback before interaction.'''
+        logger.info("Call `before` process")
+        if self.timer:
+            self.timer.cancel()
+            self.timer = None

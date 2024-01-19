@@ -4,8 +4,8 @@ import logging
 from signal import pause
 from secduck import DeviceInput, DeviceOutput, Connector, Speaker, Recorder, Duck
 
-# SERVER_URL = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
-SERVER_URL = "http://localhost:8080"
+SERVER_URL = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
+# SERVER_URL = "http://localhost:8080"
 IS_VIRTUAL = True
 
 logging.basicConfig(
