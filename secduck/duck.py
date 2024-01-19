@@ -42,8 +42,6 @@ class Duck:
         self.speaker = speaker
         self.recorder = recorder
 
-        self.state = DuckState.PAUSE
-
         # Interaction mappings
         self.device_input.on_pause = self.on_pause
         self.device_input.on_break = self.on_break
@@ -52,18 +50,22 @@ class Duck:
         self.device_input.on_stop_recording = self.on_stop_recording
         self.device_input.on_review = self.on_review
         self.device_input.on_sync = self.on_sync
-
         self.device_input.on_before = self.on_before
 
         self.on_sync()
 
         self.timer = None
+        self.state = DuckState.PAUSE
+        self.device_output.on_pause()
 
     def on_pause(self):
         '''Duck starts pausing.'''
         logger.info("Start pausing")
         if self.state == DuckState.BUSY:
             logger.warning("Busy now")
+            return
+        elif self.state == DuckState.PAUSE:
+            logger.warning("Already paused")
             return
         self.state = DuckState.BUSY
         self.device_output.on_pause()
@@ -78,6 +80,9 @@ class Duck:
         logger.info("Take a break")
         if self.state == DuckState.BUSY:
             logger.warning("Busy now")
+            return
+        elif self.state == DuckState.BREAK:
+            logger.warning("Already on break")
             return
         self.state = DuckState.BUSY
         self.device_output.on_break()
@@ -94,6 +99,9 @@ class Duck:
         logger.info("Start focusing")
         if self.state == DuckState.BUSY:
             logger.warning("Busy now")
+            return
+        elif self.state == DuckState.FOCUS:
+            logger.warning("Already focusing")
             return
         self.state = DuckState.BUSY
         self.device_output.on_focus()
