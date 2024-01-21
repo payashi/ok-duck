@@ -6,17 +6,17 @@ from secduck import DeviceInput, DeviceOutput, Connector, Speaker, Recorder, Duc
 
 # SERVER_URL = "https://secduck-upload-server-xwufhlvadq-an.a.run.app"
 SERVER_URL = "http://localhost:8080"
-VIRTUAL = True
+IS_VIRTUAL = True
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(asctime)s - %(levelname).4s - [%(name)s] %(message)s',
-    datefmt='%H:%M:%S'
+    format="%(asctime)s - %(levelname).4s - [%(name)s] %(message)s",
+    datefmt="%H:%M:%S",
 )
 
 duck = Duck(
-    device_input=DeviceInput(VIRTUAL),
-    device_output=DeviceOutput(VIRTUAL),
+    device_input=DeviceInput(IS_VIRTUAL, spi=False),
+    device_output=DeviceOutput(IS_VIRTUAL),
     connector=Connector(SERVER_URL),
     speaker=Speaker(),
     recorder=Recorder(),
@@ -29,4 +29,4 @@ try:
 
 finally:
     duck.on_exit()
-    print('Shutting down...')
+    print("Shutting down...")

@@ -15,7 +15,7 @@ class DeviceInput:
         virtual: Whether the input devices are virtual.
     '''
 
-    def __init__(self, virtual:bool=False):
+    def __init__(self, virtual:bool=False, spi:bool=True):
         self.virtual = virtual
 
         self.on_pause = lambda: None
@@ -25,6 +25,8 @@ class DeviceInput:
         self.on_stop_recording = lambda: None
         self.on_review = lambda: None
         self.on_sync = lambda: None
+        self.on_before = lambda: None
+        self.on_after = lambda: None
 
         if self.virtual:
             t = threading.Thread(target=self.key_detect)
@@ -34,7 +36,13 @@ class DeviceInput:
             self.break_btn = HoldableButton(17, pull_up=True)
             self.focus_btn = HoldableButton(27, pull_up=True)
             self.record_btn = HoldableButton(22, pull_up=True)
-            self.pot = MCP3008(0) # Channel 0
+            if spi:
+                self.pot = MCP3008(0) # Channel 0
+            else:
+                class Pot:
+                    '''A mock class that represents a potentiometer.'''
+                self.pot = Pot()
+                self.pot.value = 1.0
 
             self.pause_btn.short_callback = self._on_pause
             self.break_btn.short_callback = self._on_break
@@ -47,46 +55,59 @@ class DeviceInput:
     def _on_pause(self):
         '''Called when the pause button is pressed.'''
         logger.info('Detect pause button press')
+        self.on_before()
         self.on_pause()
+        self.on_after()
 
     def _on_break(self):
         '''Called when the break button is pressed.'''
         logger.info('Detect break button press')
+        self.on_before()
         self.on_break()
+        self.on_after()
 
     def _on_focus(self):
         '''Called when the focus button is pressed.'''
         logger.info('Detect focus button press')
+        self.on_before()
         self.on_focus()
+        self.on_after()
 
     def _on_start_recording(self):
         '''Called when the record button is pressed.'''
         logger.info('Detect record button press')
+        self.on_before()
         self.on_start_recording()
+        self.on_after()
 
     def _on_stop_recording(self):
         '''Called when the record button is released.'''
         logger.info('Detect record button release')
+        self.on_before()
         self.on_stop_recording()
+        self.on_after()
 
     def _on_review(self):
         '''Called when the pause button is held for a long time.'''
         logger.info('Detect pause button hold')
+        self.on_before()
         self.on_review()
+        self.on_after()
 
     def _on_sync(self):
         '''Called when the focus button is held for a long time.'''
         logger.info('Detect focus button hold')
+        self.on_before()
         self.on_sync()
-
+        self.on_after()
 
     @property
     def volume(self):
         """Get the volume"""
         if self.virtual:
-            return 1.0
+            return 4.0
         else:
-            return self.pot.value
+            return self.pot.value * 4.0
 
     def key_detect(self):
         """Detect a key to press"""
