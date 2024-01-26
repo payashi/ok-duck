@@ -81,6 +81,27 @@ class Connector:
         except RequestException as e:
             logger.exception("Failed to request: %s", e.response)
 
+    def sync_pomo(self):
+        """Sync pomo from server"""
+        try:
+            response = requests.post(
+                f"{self.server_url}/sync_pomo",
+                headers={"Content-Type": "application/json"},
+                timeout=60,
+            )
+            response.raise_for_status()
+            json_data = response.json()
+            focus_time = int(json_data["focus_time"])
+            break_time = int(json_data["break_time"])
+            logger.info(
+                "Synced pomo: focus_time: %d, break_time: %d", focus_time, break_time
+            )
+            return focus_time, break_time
+
+        except RequestException as e:
+            logger.exception("Failed to request: %s", e.response)
+            return 25, 5
+
     def log_prompt(self, prompt_id: str):
         """Log to server"""
         data = {

@@ -60,9 +60,13 @@ class Duck:
         self.device_input.on_sync = self.on_sync
         self.device_input.on_before = self.on_before
 
+        self.timer = None
+        self.focus_time = None
+        self.break_time = None
+        self.state = DuckState.BUSY
+
         self.on_sync()
 
-        self.timer = None
         self.state = DuckState.PAUSE
         self.device_output.on_pause()
 
@@ -98,7 +102,7 @@ class Duck:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.BREAK
 
-        self.timer = Timer(5 * 60, self.on_focus)
+        self.timer = Timer(self.break_time * 60, self.on_focus)
         self.timer.start()
 
     def on_focus(self):
@@ -117,7 +121,7 @@ class Duck:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.FOCUS
 
-        self.timer = Timer(25 * 60, self.on_break)
+        self.timer = Timer(self.focus_time * 60, self.on_break)
         self.timer.start()
 
     def on_review(self):
@@ -169,6 +173,7 @@ class Duck:
         """Duck syncs."""
         logger.info("Sync")
         self.connector.sync()
+        self.focus_time, self.break_time = self.connector.sync_pomo()
 
     def on_before(self):
         """Callback before interaction."""
