@@ -107,7 +107,7 @@ class DeviceInput:
         if self.virtual:
             return 4.0
         else:
-            return self.pot.value * 4.0
+            return self.pot.value * 8.0
 
     def key_detect(self):
         """Detect a key to press"""

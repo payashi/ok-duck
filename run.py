@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 duck = Duck(
-    device_input=DeviceInput(IS_VIRTUAL, spi=False),
+    device_input=DeviceInput(IS_VIRTUAL, spi=True),
     device_output=DeviceOutput(IS_VIRTUAL),
     connector=Connector(SERVER_URL),
     speaker=Speaker(),
