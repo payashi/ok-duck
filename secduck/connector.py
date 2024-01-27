@@ -83,16 +83,22 @@ class Connector:
 
     def sync_pomo(self):
         """Sync pomo from server"""
+        data = {
+            "user_id": self.user_id,
+            "duck_id": self.duck_id,
+        }
+
         try:
             response = requests.post(
                 f"{self.server_url}/sync_pomo",
                 headers={"Content-Type": "application/json"},
+                json=data,
                 timeout=60,
             )
             response.raise_for_status()
             json_data = response.json()
-            focus_time = int(json_data["focus_time"])
-            break_time = int(json_data["break_time"])
+            focus_time = float(json_data["focus_time"])
+            break_time = float(json_data["break_time"])
             logger.info(
                 "Synced pomo: focus_time: %d, break_time: %d", focus_time, break_time
             )

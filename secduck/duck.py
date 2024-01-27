@@ -102,7 +102,7 @@ class Duck:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.BREAK
 
-        self.timer = Timer(self.break_time * 60, self.on_focus)
+        self.timer = Timer(self.break_time*60, self.on_focus)
         self.timer.start()
 
     def on_focus(self):
@@ -141,11 +141,13 @@ class Duck:
         """Duck starts recording."""
         logger.info("Start recording")
         self.recorder.start()
+        self.device_output.on_start_recording()
 
     def on_stop_recording(self):
         """Duck stops recording."""
         logger.info("Stop recording")
         self.recorder.stop()
+        self.device_output.on_stop_recording()
         audio = self.recorder.export()
         self.connector.log_record(audio)
 

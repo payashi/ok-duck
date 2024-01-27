@@ -22,7 +22,12 @@ class DeviceOutput:
         self.record_led = led(23)
         self.power_led = led(24)
 
+        self.pause_led.off()
+        self.break_led.off()
+        self.focus_led.off()
+        self.record_led.off()
         self.power_led.on()
+        
 
     def on_pause(self):
         '''Turn on the pause led.'''
