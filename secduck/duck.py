@@ -4,13 +4,13 @@ A class that represents the Duck.
 
 from enum import Enum
 import logging
-from threading import Timer
 
 from .recorder import Recorder
 from .speaker import Speaker
 from .device_input import DeviceInput
 from .device_output import DeviceOutput
 from .connector import Connector
+from .timer import Timer
 
 logger = logging.getLogger("Duck")
 
@@ -60,7 +60,7 @@ class Duck:
         self.device_input.on_sync = self.on_sync
         self.device_input.on_before = self.on_before
 
-        self.timer = None
+        self.timer = Timer()
         self.focus_time = None
         self.break_time = None
         self.state = DuckState.BUSY
@@ -76,15 +76,17 @@ class Duck:
         if self.state == DuckState.BUSY:
             logger.warning("Busy now")
             return
-        elif self.state == DuckState.PAUSE:
-            logger.warning("Already paused")
-            return
         self.state = DuckState.BUSY
         self.device_output.on_pause()
         audio = self.connector.fetch("pause")
         if audio:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.PAUSE
+
+        if self.timer.is_running():
+            self.timer.pause()
+        else:
+            self.timer.resume()
 
     def on_break(self):
         """Duck takes a break."""
@@ -102,8 +104,8 @@ class Duck:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.BREAK
 
-        self.timer = Timer(self.break_time*60, self.on_focus)
-        self.timer.start()
+        self.timer.start(self.break_time, self.on_focus)
+        logger.info("Timer set for %d minutes", self.break_time)
 
     def on_focus(self):
         """Duck starts focusing."""
@@ -121,8 +123,8 @@ class Duck:
             self.speaker.start(audio, self.device_input.volume)
         self.state = DuckState.FOCUS
 
-        self.timer = Timer(self.focus_time * 60, self.on_break)
-        self.timer.start()
+        self.timer.start(self.focus_time, self.on_break)
+        logger.info("Timer set for %d minutes", self.focus_time)
 
     def on_review(self):
         """Duck starts reviewing."""
@@ -180,6 +182,4 @@ class Duck:
     def on_before(self):
         """Callback before interaction."""
         logger.info("Call `before` process")
-        if self.timer:
-            self.timer.cancel()
-            self.timer = None
+
